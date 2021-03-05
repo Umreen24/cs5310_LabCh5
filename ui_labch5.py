@@ -156,6 +156,7 @@ Q4 & Q5 - Create list of brain state labels & combine dataframes into one.
 # Calling create_labels function
 sub1_state_labels = create_labels(sub1_pre_df, sub1_med_df, sub1_post_df)
 
+
 # Calling combine_datasets function
 sub1_df = combine_datasets(sub1_pre_df, sub1_med_df, sub1_post_df)
 
@@ -237,7 +238,7 @@ sub1_pred = sub1_rf.predict(sub1_X_test)
 Q13 - Create confusion matrix and compute accuracy.
 """
 # Confusion matrix creation
-conf_mat = confusion_matrix(sub1_y_test, sub1_pred)
+sub1_conf_mat = confusion_matrix(sub1_y_test, sub1_pred)
 
 # Accuracy score
 sub1_accuracy = accuracy_score(sub1_y_test, sub1_pred)
@@ -374,8 +375,196 @@ sub2_pred = sub2_rf.predict(sub2_X_test)
 Q13 - Create confusion matrix and compute accuracy.
 """
 # Confusion matrix creation
-conf_mat = confusion_matrix(sub2_y_test, sub2_pred)
+sub2_conf_mat = confusion_matrix(sub2_y_test, sub2_pred)
 
 # Accuracy score
 sub2_accuracy = accuracy_score(sub2_y_test, sub2_pred)
 print('Accuracy Rate: {}%'.format(round(sub2_accuracy * 100, 1)))
+
+"""
+SUBJECT 1 & 2 COMBINED
+"""
+"""
+Q15 & Q16 - Combine subject 1 & 2 datasets. Repeat steps 6-13 for combined data.
+"""
+# Combine subject 1 & 2 dataframes into one
+combined_frames = [sub1_df, sub2_df]
+combined_df = pd.concat(combined_frames, ignore_index = True)
+
+# Combine state labels
+combined_labels = sub1_state_labels + sub2_state_labels
+
+# Correlation matrix & removing co-linearity
+combined_corr_mat, cols_to_remove = remove_colinearity(combined_df, -0.9)
+combined_df_remain = combined_df.drop(columns = cols_to_remove, axis = 1)
+combined_corr = combined_df_remain.corr()
+
+# Heatmap of Correlation matrix before & after removing co-linearity
+sns.set_theme(style = "white")
+
+plt.figure(figsize=(8,8))
+color_map = sns.diverging_palette(230, 20, as_cmap = True)
+sns.heatmap(combined_corr_mat, annot = False, cmap = color_map, vmax = 1, 
+            center = 0, square = True, linewidths = 0.1,
+            cbar_kws = {"shrink": 0.75})
+plt.title('Heat Map of Combined Data Correlation Coefficient Matrix', fontsize = 18)
+plt.xlabel('Column Number from the Data Frame', fontsize = 12)
+plt.ylabel('Column Number from the Data Frame', fontsize = 12)
+plt.savefig('combined_fig1.png')
+plt.show
+
+
+plt.figure(figsize=(8,8))
+color_map = sns.diverging_palette(230, 20, as_cmap = True)
+sns.heatmap(combined_corr, annot = False, cmap = color_map, vmax = 1, 
+            center = 0, square = True, linewidths = 0.5,
+            cbar_kws = {"shrink": 0.75})
+plt.title('Heat Map of Combined Data Correlation Coefficient Matrix', fontsize = 18)
+plt.xlabel('Column Number from the Data Frame', fontsize = 12)
+plt.ylabel('Column Number from the Data Frame', fontsize = 12)
+plt.savefig('combined_fig2.png')
+plt.show
+
+# Normalize data using min_max function
+combined_normalized = min_max(combined_df_remain)
+
+# Split data into train & test 
+X = combined_normalized
+y = combined_labels
+
+# Splitting data into train and test models
+combined_X_train, combined_X_test, combined_y_train, combined_y_test = train_test_split(
+    X, 
+    y, 
+    random_state = None,
+    test_size = 0.2,
+    stratify = y)
+
+# Random Forest config
+combined_rf = RandomForestClassifier(
+    n_estimators = 10, 
+    max_depth = None, 
+    min_samples_split = 2, 
+    random_state = None)
+
+# Training data
+combined_rf.fit(combined_X_train, combined_y_train)
+
+# Testing data
+combined_pred = combined_rf.predict(combined_X_test)
+
+# Confusion matrix creation
+combined_conf_mat = confusion_matrix(combined_y_test, combined_pred)
+
+# Accuracy score
+combined_accuracy = accuracy_score(combined_y_test, combined_pred)
+print('Accuracy Rate: {}%'.format(round(combined_accuracy * 100, 1)))
+
+"""
+WORD DOC WITH LAB RESULTS
+"""
+doc = Document()
+
+# SUBJECT 1 FINDINGS
+doc.add_heading('Subject 1 Correlation Coefficient Matrix Before Removing Co-linearity', level = 1)
+
+doc.add_picture('sub1_fig1.png')
+doc.add_paragraph()
+doc.add_page_break()
+
+doc.add_heading('Subject 1 Correlation Coefficient Matrix After Removing Co-linearity', level = 1)
+
+doc.add_picture('sub1_fig2.png')
+doc.add_paragraph()
+
+doc.add_heading('Confusion Matrix:', level = 1)
+
+table = doc.add_table(rows = sub1_conf_mat.shape[0] + 1, cols = sub1_conf_mat.shape[1] + 1)
+table.style = 'Medium Grid 3 Accent 3'
+
+row = table.rows[0]
+row.cells[1].text = 'Predicted Med'
+row.cells[2].text = 'Predicted Post'
+row.cells[3].text = 'Predicted Pre'
+
+col = table.columns[0]
+col.cells[1].text = 'Actual Med'
+col.cells[2].text = 'Actual Post'
+col.cells[3].text = 'Actual Pre'
+
+for i in range(sub1_conf_mat.shape[0]):
+    for j in range(sub1_conf_mat.shape[1]):
+        table.cell(i + 1, j + 1).text = str(sub1_conf_mat[i, j])
+
+doc.add_paragraph()
+doc.add_paragraph('Subject 1 Accuracy Rate: {}%'.format(round(sub1_accuracy * 100, 1)))
+
+# SUBJECT 2 FINDINGS
+doc.add_heading('Subject 2 Correlation Coefficient Matrix Before Removing Co-linearity', level = 1)
+
+doc.add_picture('sub2_fig1.png')
+doc.add_paragraph()
+doc.add_page_break()
+
+doc.add_heading('Subject 2 Correlation Coefficient Matrix After Removing Co-linearity', level = 1)
+
+doc.add_picture('sub2_fig2.png')
+doc.add_paragraph()
+
+doc.add_heading('Confusion Matrix:', level = 1)
+
+table = doc.add_table(rows = sub2_conf_mat.shape[0] + 1, cols = sub2_conf_mat.shape[1] + 1)
+table.style = 'Medium Grid 3 Accent 3'
+
+row = table.rows[0]
+row.cells[1].text = 'Predicted Med'
+row.cells[2].text = 'Predicted Post'
+row.cells[3].text = 'Predicted Pre'
+
+col = table.columns[0]
+col.cells[1].text = 'Actual Med'
+col.cells[2].text = 'Actual Post'
+col.cells[3].text = 'Actual Pre'
+
+for i in range(sub2_conf_mat.shape[0]):
+    for j in range(sub2_conf_mat.shape[1]):
+        table.cell(i + 1, j + 1).text = str(sub2_conf_mat[i, j])
+
+doc.add_paragraph()
+doc.add_paragraph('Subject 2 Accuracy Rate: {}%'.format(round(sub2_accuracy * 100, 1)))
+
+# COMBINED DATA FINDINGS
+doc.add_heading('Combined Correlation Coefficient Matrix Before Removing Co-linearity', level = 1)
+
+doc.add_picture('combined_fig1.png')
+doc.add_paragraph()
+doc.add_page_break()
+
+doc.add_heading('Combined Correlation Coefficient Matrix After Removing Co-linearity', level = 1)
+
+doc.add_picture('combined_fig2.png')
+doc.add_paragraph()
+
+doc.add_heading('Confusion Matrix:', level = 1)
+
+table = doc.add_table(rows = combined_conf_mat.shape[0] + 1, cols = combined_conf_mat.shape[1] + 1)
+table.style = 'Medium Grid 3 Accent 3'
+
+row = table.rows[0]
+row.cells[1].text = 'Predicted Med'
+row.cells[2].text = 'Predicted Post'
+row.cells[3].text = 'Predicted Pre'
+
+col = table.columns[0]
+col.cells[1].text = 'Actual Med'
+col.cells[2].text = 'Actual Post'
+col.cells[3].text = 'Actual Pre'
+
+for i in range(combined_conf_mat.shape[0]):
+    for j in range(combined_conf_mat.shape[1]):
+        table.cell(i + 1, j + 1).text = str(combined_conf_mat[i, j])
+
+doc.add_paragraph()
+doc.add_paragraph('Combined Accuracy Rate: {}%'.format(round(combined_accuracy * 100, 1)))
+
+doc.save('Chapter05-Lab-UI2.docx')
