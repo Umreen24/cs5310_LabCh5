@@ -214,7 +214,7 @@ y = sub1_state_labels
 sub1_X_train, sub1_X_test, sub1_y_train, sub1_y_test = train_test_split(
     X, 
     y, 
-    random_state = None,
+    random_state = 42,
     test_size = 0.2,
     stratify = y)
      
@@ -226,7 +226,7 @@ sub1_rf = RandomForestClassifier(
     n_estimators = 10, 
     max_depth = None, 
     min_samples_split = 2, 
-    random_state = None)
+    random_state = 42)
 
 # Training data
 sub1_rf.fit(sub1_X_train, sub1_y_train)
@@ -239,6 +239,9 @@ Q13 - Create confusion matrix and compute accuracy.
 """
 # Confusion matrix creation
 sub1_conf_mat = confusion_matrix(sub1_y_test, sub1_pred)
+
+print(sub1_y_test)
+print(sub1_pred)
 
 # Accuracy score
 sub1_accuracy = accuracy_score(sub1_y_test, sub1_pred)
@@ -351,7 +354,7 @@ y = sub2_state_labels
 sub2_X_train, sub2_X_test, sub2_y_train, sub2_y_test = train_test_split(
     X, 
     y, 
-    random_state = None,
+    random_state = 42,
     test_size = 0.2,
     stratify = y)
      
@@ -363,7 +366,7 @@ sub2_rf = RandomForestClassifier(
     n_estimators = 10, 
     max_depth = None, 
     min_samples_split = 2, 
-    random_state = None)
+    random_state = 42)
 
 # Training data
 sub2_rf.fit(sub2_X_train, sub2_y_train)
@@ -436,7 +439,7 @@ y = combined_labels
 combined_X_train, combined_X_test, combined_y_train, combined_y_test = train_test_split(
     X, 
     y, 
-    random_state = None,
+    random_state = 42,
     test_size = 0.2,
     stratify = y)
 
@@ -445,7 +448,7 @@ combined_rf = RandomForestClassifier(
     n_estimators = 10, 
     max_depth = None, 
     min_samples_split = 2, 
-    random_state = None)
+    random_state = 42)
 
 # Training data
 combined_rf.fit(combined_X_train, combined_y_train)
@@ -567,4 +570,4 @@ for i in range(combined_conf_mat.shape[0]):
 doc.add_paragraph()
 doc.add_paragraph('Combined Accuracy Rate: {}%'.format(round(combined_accuracy * 100, 1)))
 
-doc.save('Chapter05-Lab-UI2.docx')
+doc.save('Chapter05-Lab.docx')
